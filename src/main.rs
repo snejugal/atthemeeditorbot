@@ -44,6 +44,8 @@ async fn handle_start<C: connectors::Connector>(context: Arc<Text<C>>) {
         if let Err(err) = call_result {
             dbg!(err);
         }
+
+        return;
     }
 
     let download_theme = async {
