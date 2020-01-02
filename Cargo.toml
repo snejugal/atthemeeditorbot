@@ -1,0 +1,15 @@
+[package]
+name = "atthemeeditorbot"
+version = "2.0.0"
+authors = ["SnejUgal <contact@snejugal.ru>"]
+edition = "2018"
+license = "AGPL-3.0-or-later"
+
+[dependencies]
+tbot = { version = "0.4", default-features = false, features = ["rustls"] }
+tokio = { version = "0.2", features = ["macros", "time"] }
+futures = "0.3"
+attheme = "0.3"
+
+[dependencies.attheme_editor_api]
+git = "https://gitlab.com/SnejUgal/attheme-editor-api-rs"
