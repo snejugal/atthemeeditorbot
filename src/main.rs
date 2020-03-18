@@ -3,8 +3,8 @@ use attheme_editor_api::{download, upload, Error, Theme, ThemeId};
 use futures::future::select;
 use std::{borrow::Borrow, path::Path, sync::Arc, time::Duration};
 use tbot::{
-    connectors,
-    contexts::{traits::ChatMethods, Document, Text},
+    connectors::Connector,
+    contexts::{traits::ChatMethods, Command, Document, Text},
     types::{
         chat, input_file,
         keyboard::inline::{Button, ButtonKind},
@@ -20,14 +20,12 @@ async fn main() {
 
     bot.start(handle_start);
 
-    bot.help(|context| {
-        async move {
-            let message = localization::help_message();
-            let call_result = context.send_message(message).call().await;
+    bot.help(|context| async move {
+        let message = localization::help_message();
+        let call_result = context.send_message(message).call().await;
 
-            if let Err(err) = call_result {
-                dbg!(err);
-            }
+        if let Err(err) = call_result {
+            dbg!(err);
         }
     });
 
@@ -36,7 +34,7 @@ async fn main() {
     bot.polling().start().await.unwrap();
 }
 
-async fn handle_start<C: connectors::Connector>(context: Arc<Text<C>>) {
+async fn handle_start<C: Connector>(context: Arc<Command<Text<C>>>) {
     if context.text.value.is_empty() {
         let message = localization::start_message();
         let call_result = context.send_message(message).call().await;
@@ -93,7 +91,7 @@ async fn handle_start<C: connectors::Connector>(context: Arc<Text<C>>) {
     select(Box::pin(download_theme), Box::pin(start_typing(&*context))).await;
 }
 
-async fn handle_document<C: connectors::Connector>(context: Arc<Document<C>>) {
+async fn handle_document<C: Connector>(context: Arc<Document<C>>) {
     let wrong_file_type = async {
         let message = localization::wrong_file_type();
         let call_result = context.send_message_in_reply(message).call().await;
@@ -167,10 +165,10 @@ async fn handle_document<C: connectors::Connector>(context: Arc<Document<C>>) {
     select(Box::pin(upload_theme), Box::pin(start_typing(&*context))).await;
 }
 
-async fn start_typing<'a, Context, Connector>(context: &Context)
+async fn start_typing<'a, Ctx, Conn>(context: &Ctx)
 where
-    Context: ChatMethods<'a, Connector>,
-    Connector: connectors::Connector,
+    Ctx: ChatMethods<'a, Conn>,
+    Conn: Connector,
 {
     loop {
         let delay = delay_for(Duration::from_secs(5));
