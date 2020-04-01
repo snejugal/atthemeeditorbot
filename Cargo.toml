@@ -8,8 +8,8 @@ license = "AGPL-3.0-or-later"
 [dependencies]
 tbot = { version = "0.5", default-features = false, features = ["rustls"] }
 tokio = { version = "0.2", features = ["macros", "time"] }
-futures = "0.3"
 attheme = "0.3"
+lazy_static = "1.4"
 
 [dependencies.attheme_editor_api]
 git = "https://gitlab.com/SnejUgal/attheme-editor-api-rs"

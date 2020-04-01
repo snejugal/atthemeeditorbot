@@ -1,16 +1,16 @@
 use attheme::{Attheme, ColorSignature};
 use attheme_editor_api::{download, upload, Error, Theme, ThemeId};
-use futures::future::select;
 use std::{borrow::Borrow, path::Path, sync::Arc, time::Duration};
 use tbot::{
     connectors::Connector,
     contexts::{traits::ChatMethods, Command, Document, Text},
     types::{
-        chat, input_file,
+        chat::Action::Typing,
+        input_file,
         keyboard::inline::{Button, ButtonKind},
     },
 };
-use tokio::time::delay_for;
+use tokio::{select, time::delay_for};
 
 mod localization;
 
@@ -88,30 +88,27 @@ async fn handle_start<C: Connector>(context: Arc<Command<Text<C>>>) {
         }
     };
 
-    select(Box::pin(download_theme), Box::pin(start_typing(&*context))).await;
+    select! {
+        _ = download_theme => (),
+        _ = start_typing(&*context) => (),
+    }
 }
 
 async fn handle_document<C: Connector>(context: Arc<Document<C>>) {
-    let wrong_file_type = async {
-        let message = localization::wrong_file_type();
-        let call_result = context.send_message_in_reply(message).call().await;
+    let file_name = match &context.document.file_name {
+        Some(file_name) if file_name.ends_with(".attheme") => file_name,
+        _ => {
+            let message = localization::wrong_file_type();
+            let call_result =
+                context.send_message_in_reply(message).call().await;
 
-        if let Err(err) = call_result {
-            dbg!(err);
+            if let Err(err) = call_result {
+                dbg!(err);
+            }
+
+            return;
         }
     };
-
-    let file_name = if let Some(file_name) = &context.document.file_name {
-        file_name
-    } else {
-        wrong_file_type.await;
-        return;
-    };
-
-    if !file_name.ends_with(".attheme") {
-        wrong_file_type.await;
-        return;
-    }
 
     let upload_theme = async {
         let call_result = context.bot.get_file(&context.document).call().await;
@@ -162,19 +159,22 @@ async fn handle_document<C: Connector>(context: Arc<Document<C>>) {
         }
     };
 
-    select(Box::pin(upload_theme), Box::pin(start_typing(&*context))).await;
+    select! {
+        _ = upload_theme => (),
+        _ = start_typing(&*context) => (),
+    }
 }
 
-async fn start_typing<'a, Ctx, Conn>(context: &Ctx)
+async fn start_typing<'a, Ctx, Con>(context: &Ctx)
 where
-    Ctx: ChatMethods<'a, Conn>,
-    Conn: Connector,
+    Ctx: ChatMethods<'a, Con>,
+    Con: Connector,
 {
     loop {
         let delay = delay_for(Duration::from_secs(5));
         let call_result = context
             .bot()
-            .send_chat_action(context.chat().id, chat::Action::Typing)
+            .send_chat_action(context.chat().id, Typing)
             .call()
             .await;
 
