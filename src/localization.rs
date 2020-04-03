@@ -44,7 +44,7 @@ pub fn open_theme_button(theme: &str) -> String {
 pub fn theme_uploaded() -> Text<'static> {
     lazy_static! {
         static ref THEME_UPLOADED: String = markdown_v2((
-            "Theme theme is ready to be openede in the editor! Just tap \
+            "The theme is ready to be openede in the editor! Just tap \
              the button below.\n\n",
             bold("Warning:"),
             " Once you use the link, it expires and can't be used anymore.",
