@@ -6,6 +6,7 @@ edition = "2018"
 license = "AGPL-3.0-or-later"
 
 [dependencies]
+dotenv = "0.15"
 tbot = { version = "0.5", default-features = false, features = ["rustls"] }
 tokio = { version = "0.2", features = ["macros", "time"] }
 attheme = "0.3"

@@ -1,7 +1,9 @@
 use attheme::{Attheme, ColorSignature};
 use attheme_editor_api::{download, upload, Error, Theme, ThemeId};
+use dotenv::dotenv;
 use std::{borrow::Borrow, path::Path, sync::Arc, time::Duration};
 use tbot::{
+    Bot,
     connectors::Connector,
     contexts::{traits::ChatMethods, Command, Document, Text},
     types::{
@@ -16,7 +18,8 @@ mod localization;
 
 #[tokio::main]
 async fn main() {
-    let mut bot = tbot::from_env!("BOT_TOKEN").event_loop();
+    let _ = dotenv();
+    let mut bot = Bot::from_env("BOT_TOKEN").event_loop();
 
     bot.start(handle_start);
 
@@ -31,7 +34,11 @@ async fn main() {
 
     bot.document(handle_document);
 
-    bot.polling().start().await.unwrap();
+    if let Ok(url) = std::env::var("WEBHOOK_URL") {
+        bot.webhook(&url, 5004).http().start().await.unwrap();
+    } else {
+        bot.polling().start().await.unwrap();
+    }
 }
 
 async fn handle_start<C: Connector>(context: Arc<Command<Text<C>>>) {
