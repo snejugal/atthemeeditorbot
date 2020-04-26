@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use tbot::markup::{bold, link, markdown_v2};
+use tbot::markup::{bold, inline_code, link, markdown_v2};
 use tbot::types::parameters::Text;
 
 pub fn start_message() -> Text<'static> {
@@ -7,8 +7,9 @@ pub fn start_message() -> Text<'static> {
         static ref START_MESSAGE: String = markdown_v2((
             "Hello! I'm a bot that makes it easier to open themes in ",
             link(".attheme editor", "https://attheme-editor.snejugal.ru"),
-            ". Just send me an .attheme file, and I will send you the link \
-             to open it.",
+            ". Just send me an ",
+            inline_code([".attheme"]),
+            " file, and I will send you the link to open it.",
         ))
         .to_string();
     }
@@ -21,8 +22,9 @@ pub fn help_message() -> Text<'static> {
         static ref HELP_MESSAGE: String = markdown_v2((
             "I'm a bot that makes it easier to open themes in ",
             link(".attheme editor", "https://attheme-editor.snejugal.ru"),
-            ". Just send me an .attheme file, and I will send you the link \
-             to open it.",
+            ". Just send me an ",
+            inline_code([".attheme"]),
+            " file, and I will send you the link to open it.",
         ))
         .to_string();
     }
@@ -31,10 +33,17 @@ pub fn help_message() -> Text<'static> {
 }
 
 pub fn wrong_file_type() -> Text<'static> {
-    Text::plain(
-        "Hmm, looks like you sent a wrong file — \
-         I only know how to work with .attheme files.",
-    )
+    lazy_static! {
+        static ref WRONG_FILE_TYPE: String = markdown_v2((
+            "Hmm, looks like you sent a wrong file — \
+             I only know how to work with ",
+            inline_code([".attheme"]),
+            " files.",
+        ))
+        .to_string();
+    }
+
+    Text::markdown_v2(&WRONG_FILE_TYPE)
 }
 
 pub fn open_theme_button(theme: &str) -> String {
@@ -44,8 +53,8 @@ pub fn open_theme_button(theme: &str) -> String {
 pub fn theme_uploaded() -> Text<'static> {
     lazy_static! {
         static ref THEME_UPLOADED: String = markdown_v2((
-            "The theme is ready to be openede in the editor! Just tap \
-             the button below.\n\n",
+            "The theme is ready to be opened in the editor! \
+             Just tap the button below.\n\n",
             bold("Warning:"),
             " Once you use the link, it expires and can't be used anymore.",
         ))
