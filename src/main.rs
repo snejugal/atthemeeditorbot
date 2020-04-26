@@ -6,7 +6,7 @@ use tbot::{
     contexts::{Command, Document, Text},
     prelude::*,
     types::{
-        chat::Action::Typing,
+        chat::Action::{Typing, UploadDocument},
         input_file,
         keyboard::inline::{Button, ButtonKind},
     },
@@ -97,7 +97,7 @@ async fn handle_start(context: Arc<Command<Text>>) {
 
     select! {
         _ = download_theme => (),
-        Err(error) = context.send_chat_action_in_loop(Typing) => {
+        Err(error) = context.send_chat_action_in_loop(UploadDocument) => {
             dbg!(error);
         },
     }
