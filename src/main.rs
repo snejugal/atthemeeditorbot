@@ -1,18 +1,18 @@
 use attheme::{Attheme, ColorSignature};
 use attheme_editor_api::{download, upload, Error, Theme, ThemeId};
 use dotenv::dotenv;
-use std::{borrow::Borrow, path::Path, sync::Arc, time::Duration};
+use std::{borrow::Borrow, path::Path, sync::Arc};
 use tbot::{
-    Bot,
-    connectors::Connector,
-    contexts::{traits::ChatMethods, Command, Document, Text},
+    contexts::{Command, Document, Text},
+    prelude::*,
     types::{
         chat::Action::Typing,
         input_file,
         keyboard::inline::{Button, ButtonKind},
     },
+    Bot,
 };
-use tokio::{select, time::delay_for};
+use tokio::select;
 
 mod localization;
 
@@ -41,7 +41,7 @@ async fn main() {
     }
 }
 
-async fn handle_start<C: Connector>(context: Arc<Command<Text<C>>>) {
+async fn handle_start(context: Arc<Command<Text>>) {
     if context.text.value.is_empty() {
         let message = localization::start_message();
         let call_result = context.send_message(message).call().await;
@@ -97,11 +97,13 @@ async fn handle_start<C: Connector>(context: Arc<Command<Text<C>>>) {
 
     select! {
         _ = download_theme => (),
-        _ = start_typing(&*context) => (),
+        Err(error) = context.send_chat_action_in_loop(Typing) => {
+            dbg!(error);
+        },
     }
 }
 
-async fn handle_document<C: Connector>(context: Arc<Document<C>>) {
+async fn handle_document(context: Arc<Document>) {
     let file_name = match &context.document.file_name {
         Some(file_name) if file_name.ends_with(".attheme") => file_name,
         _ => {
@@ -168,27 +170,8 @@ async fn handle_document<C: Connector>(context: Arc<Document<C>>) {
 
     select! {
         _ = upload_theme => (),
-        _ = start_typing(&*context) => (),
-    }
-}
-
-async fn start_typing<'a, Ctx, Con>(context: &Ctx)
-where
-    Ctx: ChatMethods<'a, Con>,
-    Con: Connector,
-{
-    loop {
-        let delay = delay_for(Duration::from_secs(5));
-        let call_result = context
-            .bot()
-            .send_chat_action(context.chat().id, Typing)
-            .call()
-            .await;
-
-        if let Err(err) = call_result {
-            dbg!(err);
-        }
-
-        delay.await;
+        Err(error) = context.send_chat_action_in_loop(Typing) => {
+            dbg!(error);
+        },
     }
 }
